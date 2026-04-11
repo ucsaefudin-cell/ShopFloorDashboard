@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Floor Dashboard - Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Konfigurasi Tailwind untuk custom colors (Sonoco branding)
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'sonoco-blue': '#1e3a8a',
+                        'sonoco-blue-dark': '#0f172a',
+                        'sonoco-green': '#84cc16',
+                        'sonoco-green-dark': '#65a30d',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom gradient untuk Sonoco branding */
+        .gradient-sonoco {
+            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+        }
+        .gradient-green {
+            background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
+        }
+    </style>
+</head>
+<body class="gradient-sonoco min-h-screen flex items-center justify-center">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto text-center">
+            <!-- Logo/Header -->
+            <div class="mb-12">
+                <h1 class="text-6xl font-bold text-white mb-4">
+                    Shop Floor Dashboard
+                </h1>
+                <p class="text-2xl text-sonoco-green">
+                    Real-Time Production Monitoring System
+                </p>
+            </div>
+
+            <!-- Mode Selection Cards -->
+            <div class="grid md:grid-cols-2 gap-8 mb-12">
+                <!-- TV Mode Card -->
+                <a href="/tv.html" class="block">
+                    <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-8 hover:bg-white/20 transition-all duration-300 transform hover:scale-105 border-2 border-sonoco-green/30 hover:border-sonoco-green">
+                        <div class="text-6xl mb-4">📺</div>
+                        <h2 class="text-3xl font-bold text-white mb-4">TV Mode</h2>
+                        <p class="text-lg text-gray-300 mb-4">
+                            Zero-touch display untuk monitoring dari jarak jauh
+                        </p>
+                        <ul class="text-left text-gray-400 space-y-2">
+                            <li>✓ Auto-refresh setiap 30 detik</li>
+                            <li>✓ Typography besar untuk visibility</li>
+                            <li>✓ Auto theme day/night</li>
+                            <li>✓ Shift handover event</li>
+                        </ul>
+                        <div class="mt-6">
+                            <span class="inline-block gradient-green text-white px-6 py-3 rounded-lg font-semibold">
+                                Buka TV Mode →
+                            </span>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Supervisor Mode Card -->
+                <a href="/supervisor.html" class="block">
+                    <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-8 hover:bg-white/20 transition-all duration-300 transform hover:scale-105 border-2 border-sonoco-green/30 hover:border-sonoco-green">
+                        <div class="text-6xl mb-4">👨‍💼</div>
+                        <h2 class="text-3xl font-bold text-white mb-4">Supervisor Mode</h2>
+                        <p class="text-lg text-gray-300 mb-4">
+                            Interactive dashboard untuk manajemen data
+                        </p>
+                        <ul class="text-left text-gray-400 space-y-2">
+                            <li>✓ Interactive controls</li>
+                            <li>✓ Create & update orders</li>
+                            <li>✓ Pacing charts (Chart.js)</li>
+                            <li>✓ Detailed analytics</li>
+                        </ul>
+                        <div class="mt-6">
+                            <span class="inline-block gradient-green text-white px-6 py-3 rounded-lg font-semibold">
+                                Buka Supervisor Mode →
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Footer Info -->
+            <div class="text-gray-400 text-sm">
+                <p>Powered by Flask + PostgreSQL + Vanilla JavaScript</p>
+                <p class="mt-2">© 2024 Shop Floor Dashboard MVP</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

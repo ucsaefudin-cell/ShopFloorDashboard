@@ -22,8 +22,8 @@ The implementation uses Python/Flask for the backend API, PostgreSQL for data pe
   - Use Hypothesis to generate random Machine and ProductionOrder instances
   - Test that serializing via to_dict() and reconstructing produces equivalent objects
 
-- [ ] 2. Implement business logic services and calculations
-  - [ ] 2.1 Create CalculationService with pending_qty and efficiency_percent methods
+- [x] 2. Implement business logic services and calculations
+  - [x] 2.1 Create CalculationService with pending_qty and efficiency_percent methods
     - Implement calculate_pending_qty(target_qty, completed_qty, wip_qty)
     - Implement calculate_efficiency_percent(completed_qty, target_qty)
     - Handle edge case: efficiency when target_qty is zero
@@ -41,7 +41,7 @@ The implementation uses Python/Flask for the backend API, PostgreSQL for data pe
     - Use Hypothesis to generate random target_qty (including 0) and completed_qty
     - Test correct efficiency calculation and zero-target edge case
 
-  - [ ] 2.4 Create ValidationService for production order data validation
+  - [x] 2.4 Create ValidationService for production order data validation
     - Validate required fields presence
     - Validate non-negative quantities
     - Validate foreign key references (machine_id exists)
@@ -54,26 +54,26 @@ The implementation uses Python/Flask for the backend API, PostgreSQL for data pe
     - Test invalid foreign key references
     - _Requirements: 2.6_
 
-- [ ] 3. Implement REST API endpoints
-  - [ ] 3.1 Create machine endpoints
+- [x] 3. Implement REST API endpoints
+  - [x] 3.1 Create machine endpoints
     - Implement GET /api/machines to list all active machines
     - Implement serialization to JSON
     - _Requirements: 2.1_
 
-  - [ ] 3.2 Create production order read endpoints
+  - [x] 3.2 Create production order read endpoints
     - Implement GET /api/production-orders to list all orders with calculations
     - Implement GET /api/production-orders/{id} for single order retrieval
     - Include pending_qty and efficiency_percent in responses
     - _Requirements: 2.2, 2.3, 3.4_
 
-  - [ ] 3.3 Create production order write endpoints
+  - [x] 3.3 Create production order write endpoints
     - Implement POST /api/production-orders to create new orders
     - Implement PUT /api/production-orders/{id} to update existing orders
     - Integrate ValidationService for input validation
     - Return appropriate status codes (201, 400, 404)
     - _Requirements: 2.4, 2.5, 2.6, 2.7_
 
-  - [ ] 3.4 Implement health check endpoint
+  - [x] 3.4 Implement health check endpoint
     - Create GET /api/health endpoint returning {status: "ok"}
     - _Requirements: 9.6_
 
@@ -86,7 +86,7 @@ The implementation uses Python/Flask for the backend API, PostgreSQL for data pe
     - Test 400 response for invalid data
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7_
 
-- [ ] 4. Configure Flask application and CORS
+- [x] 4. Configure Flask application and CORS
   - Set up environment variable configuration
   - Configure CORS for frontend requests
   - Set up static file serving
@@ -99,14 +99,14 @@ The implementation uses Python/Flask for the backend API, PostgreSQL for data pe
   - Use Hypothesis to generate random initial database states
   - Test that running seeder multiple times produces identical final state
 
-- [ ] 5. Checkpoint - Backend validation
+- [x] 5. Checkpoint - Backend validation
   - Ensure all backend tests pass
   - Verify seeder script populates database correctly
   - Test all API endpoints manually using curl or Postman
   - Ask the user if questions arise or if ready to proceed to frontend
 
-- [ ] 6. Create frontend scaffolding and API client
-  - [ ] 6.1 Set up HTML templates for TV Mode and Supervisor Mode
+- [-] 6. Create frontend scaffolding and API client
+  - [-] 6.1 Set up HTML templates for TV Mode and Supervisor Mode
     - Create base HTML structure with Tailwind CSS CDN
     - Apply Sonoco branding colors (dark blue + lime green)
     - Set up routing structure for /tv and /supervisor paths
