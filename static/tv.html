@@ -21,6 +21,14 @@
         }
     </script>
     <style>
+        /* CRITICAL: Force viewport fit - NO SCROLLING */
+        html, body {
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
         .gradient-sonoco {
             background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
         }
@@ -47,58 +55,377 @@
             background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
             z-index: 9999;
             display: none;
+            overflow: hidden;
         }
         .handover-overlay.active {
             display: flex;
+        }
+
+        /* Handover Content - Centered dengan Viewport Units */
+        .handover-content-wrapper {
+            width: 90%;
+            max-width: 1400px;
+            text-align: center;
+        }
+
+        .handover-icon {
+            font-size: 15vh;
+            margin-bottom: 3vh;
+        }
+
+        .handover-title {
+            font-size: 6vh;
+            margin-bottom: 4vh;
+        }
+
+        .handover-phase-label {
+            font-size: 3vh;
+            margin-bottom: 2vh;
+        }
+
+        /* Message Carousel Container */
+        .message-carousel {
+            position: relative;
+            min-height: 50vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .carousel-message {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .carousel-message.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Message Styles */
+        .message-summary {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 2vh;
+            padding: 4vh 5vw;
+        }
+
+        .message-title {
+            font-size: 5vh;
+            margin-bottom: 3vh;
+        }
+
+        .message-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 3vw;
+            margin-bottom: 3vh;
+        }
+
+        .message-stat-item {
+            text-align: center;
+        }
+
+        .message-stat-label {
+            font-size: 2.5vh;
+            margin-bottom: 1vh;
+        }
+
+        .message-stat-value {
+            font-size: 6vh;
+            font-weight: bold;
+        }
+
+        .message-text {
+            font-size: 4vh;
+            line-height: 1.5;
+        }
+
+        .message-subtitle {
+            font-size: 3vh;
+            margin-top: 2vh;
+        }
+
+        /* Carousel Indicators */
+        .carousel-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 1.5vw;
+            margin-top: 3vh;
+        }
+
+        .carousel-dot {
+            width: 2vh;
+            height: 2vh;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: background 0.3s;
+        }
+
+        .carousel-dot.active {
+            background: #84cc16;
+        }
+
+        /* Main Content Container - Exact Viewport Fit */
+        main {
+            height: calc(100vh - 12vh - 6vh); /* 100vh - header - footer */
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Single Card Layout - Horizontal 2-Column */
+        .single-card-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2vh;
+            overflow: hidden;
+        }
+
+        .single-card {
+            width: 95%;
+            height: 90%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Horizontal Layout: Left (Info) + Right (Efficiency) */
+        .card-top-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3vw;
+            height: 45%;
+            margin-bottom: 2vh;
+        }
+
+        .card-left-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 2vh 2vw;
+        }
+
+        .card-right-efficiency {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Dynamic Typography dengan Viewport Units */
+        .tv-machine-name {
+            font-size: 5vh;
+            line-height: 1.2;
+            margin-bottom: 1vh;
+        }
+
+        .tv-shift-name {
+            font-size: 3vh;
+            margin-bottom: 0.5vh;
+        }
+
+        .tv-date {
+            font-size: 2vh;
+        }
+
+        .tv-order-info {
+            font-size: 1.5vh;
+            margin-top: 1vh;
+        }
+
+        /* Efficiency Badge - Extra Large dengan Viewport Units */
+        .tv-efficiency-badge {
+            font-size: 12vh;
+            padding: 3vh 4vw;
+            border-radius: 2vh;
+            line-height: 1;
+        }
+
+        .tv-efficiency-label {
+            font-size: 3vh;
+            margin-top: 1vh;
+        }
+
+        /* KPI Grid - Horizontal Flex (4 columns side-by-side) */
+        .kpi-grid {
+            display: flex;
+            gap: 2vw;
+            height: 40%;
+        }
+
+        .kpi-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 1.5vh;
+            padding: 2vh 1vw;
+        }
+
+        .kpi-label {
+            font-size: 2.5vh;
+            margin-bottom: 1vh;
+        }
+
+        .kpi-value {
+            font-size: 5vh;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        /* Empty State - Centered dengan Viewport Units */
+        .empty-state-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .empty-state-icon {
+            font-size: 15vh;
+            margin-bottom: 3vh;
+        }
+
+        .empty-state-text {
+            font-size: 4vh;
+            line-height: 1.5;
+        }
+
+        .empty-state-info {
+            font-size: 2.5vh;
+            margin-top: 2vh;
+        }
+
+        /* Header - Fixed Height dengan Viewport Units */
+        header {
+            height: 12vh;
+            min-height: 12vh;
+            max-height: 12vh;
+        }
+
+        .header-title {
+            font-size: 4vh;
+        }
+
+        .header-shift {
+            font-size: 2.5vh;
+        }
+
+        .header-time {
+            font-size: 3vh;
+        }
+
+        .header-date {
+            font-size: 1.8vh;
+        }
+
+        /* Footer - Fixed Height dengan Viewport Units */
+        footer {
+            height: 6vh;
+            min-height: 6vh;
+            max-height: 6vh;
+            font-size: 1.5vh;
+        }
+
+        /* Test Handover Button - Subtle */
+        .test-handover-btn {
+            opacity: 0.3;
+            transition: opacity 0.3s;
+        }
+
+        .test-handover-btn:hover {
+            opacity: 1;
+        }
+
+        /* Loading State */
+        .loading-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-icon {
+            font-size: 10vh;
+            margin-bottom: 3vh;
+        }
+
+        .loading-text {
+            font-size: 3vh;
         }
     </style>
 </head>
 <body class="gradient-sonoco min-h-screen">
     <!-- Header -->
     <header class="bg-black/30 backdrop-blur-sm border-b-4 border-sonoco-green">
-        <div class="container mx-auto px-6 py-4">
-            <div class="flex justify-between items-center">
+        <div class="container mx-auto px-6 h-full flex items-center">
+            <div class="flex justify-between items-center w-full">
                 <div class="flex-1">
-                    <h1 class="text-5xl font-bold text-white mb-2">Real-Time Production Monitoring</h1>
-                    <p id="current-shift" class="text-2xl text-sonoco-green font-semibold"></p>
+                    <h1 class="header-title font-bold text-white mb-1">Real-Time Production Monitoring</h1>
+                    <p id="current-shift" class="header-shift text-sonoco-green font-semibold"></p>
                 </div>
                 <div class="text-right">
-                    <div id="current-time" class="text-3xl font-bold text-white"></div>
-                    <div id="current-date" class="text-lg text-gray-300"></div>
+                    <div id="current-time" class="header-time font-bold text-white"></div>
+                    <div id="current-date" class="header-date text-gray-300"></div>
                 </div>
             </div>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-6 py-8">
+    <main class="container mx-auto px-6">
         <!-- Loading State -->
-        <div id="loading" class="text-center py-20">
-            <div class="inline-block animate-pulse-slow">
-                <div class="text-6xl mb-4">⚙️</div>
-                <p class="text-2xl text-white">Memuat data produksi...</p>
+        <div id="loading" class="loading-container">
+            <div class="text-center">
+                <div class="loading-icon animate-pulse-slow">⚙️</div>
+                <p class="loading-text text-white">Memuat data produksi...</p>
             </div>
         </div>
 
-        <!-- Production Orders Grid -->
-        <div id="orders-grid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Cards akan di-generate oleh JavaScript -->
+        <!-- Single Card Container (Centered) -->
+        <div id="single-card-container" class="hidden single-card-container">
+            <!-- Card akan di-generate oleh JavaScript -->
         </div>
 
-        <!-- Empty State -->
-        <div id="empty-state" class="hidden text-center py-20">
-            <div class="text-6xl mb-4">📋</div>
-            <p class="text-2xl text-white">Tidak ada production order aktif</p>
+        <!-- Empty State (Centered) -->
+        <div id="empty-state" class="hidden empty-state-container">
+            <div>
+                <div class="empty-state-icon">📋</div>
+                <p class="empty-state-text text-white font-bold">
+                    Tidak ada production order aktif<br>di shift ini
+                </p>
+                <p class="empty-state-info text-gray-400" id="empty-state-info">
+                    <!-- Info tambahan akan ditampilkan di sini -->
+                </p>
+            </div>
         </div>
     </main>
 
     <!-- Shift Handover Overlay -->
     <div id="handover-overlay" class="handover-overlay items-center justify-center">
-        <div class="text-center px-8">
-            <div class="text-8xl mb-8">🎉</div>
-            <h2 class="text-6xl font-bold text-white mb-6">Shift Handover</h2>
-            <div id="handover-content" class="text-3xl text-gray-300 space-y-6">
-                <!-- Content akan di-generate oleh JavaScript -->
+        <div class="handover-content-wrapper">
+            <div class="handover-icon" id="handover-icon">🎉</div>
+            <h2 class="handover-title text-white font-bold" id="handover-title">Shift Handover</h2>
+            <p class="handover-phase-label text-sonoco-green font-semibold" id="handover-phase"></p>
+            
+            <!-- Message Carousel -->
+            <div class="message-carousel" id="message-carousel">
+                <!-- Messages akan di-generate oleh JavaScript -->
+            </div>
+            
+            <!-- Carousel Indicators -->
+            <div class="carousel-indicators" id="carousel-indicators">
+                <!-- Dots akan di-generate oleh JavaScript -->
             </div>
         </div>
     </div>
@@ -131,7 +458,12 @@
                     </div>
                 </div>
                 
-                <div>
+                <div class="flex items-center gap-4">
+                    <!-- Test Handover Button (Subtle) -->
+                    <button id="btn-test-handover" class="test-handover-btn text-gray-500 hover:text-sonoco-green text-xs transition-colors">
+                        🧪 Test Handover
+                    </button>
+                    
                     <a href="/index.html" class="text-sonoco-green hover:text-white transition-colors">
                         ← Kembali ke Home
                     </a>

@@ -10,7 +10,9 @@ const SHIFT_TIMES = {
     Afternoon: { start: 14, end: 22 },   // 2 PM - 10 PM
     Night: { start: 22, end: 6 }         // 10 PM - 6 AM (next day)
 };
-const HANDOVER_MINUTES_BEFORE = 15; // Trigger 15 menit sebelum shift berakhir
+const HANDOVER_MINUTES_BEFORE = 10; // Trigger 10 menit sebelum shift berakhir (Phase A)
+const HANDOVER_MINUTES_AFTER = 10;  // Durasi 10 menit setelah shift mulai (Phase B)
+const MESSAGE_ROTATION_INTERVAL = 10000; // 10 detik per pesan
 
 // State management
 let currentOrders = [];
@@ -19,8 +21,11 @@ let availableMachines = []; // List mesin yang tersedia
 let selectedMachineId = 'all'; // 'all' atau machine_id spesifik
 let currentMachineIndex = -1; // Index untuk prev/next navigation
 let isHandoverActive = false;
+let currentHandoverPhase = null; // 'A' atau 'B'
 let refreshIntervalId = null;
 let handoverCheckIntervalId = null;
+let messageRotationIntervalId = null;
+let currentMessageIndex = 0;
 
 /**
  * Mendapatkan shift saat ini berdasarkan jam
@@ -39,6 +44,15 @@ function getCurrentShift() {
 }
 
 /**
+ * Mendapatkan tanggal hari ini dalam format YYYY-MM-DD
+ * @returns {string} Tanggal hari ini
+ */
+function getTodayDate() {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+}
+
+/**
  * Mendapatkan shift berikutnya
  * @param {string} currentShift - Shift saat ini
  * @returns {string} Shift berikutnya
@@ -50,41 +64,86 @@ function getNextShift(currentShift) {
 }
 
 /**
- * Check apakah saat ini adalah waktu handover (15 menit sebelum shift berakhir)
- * @returns {boolean} True jika dalam window handover
+ * Check apakah saat ini adalah waktu handover dan tentukan phase-nya
+ * @returns {Object|null} { phase: 'A' atau 'B', shift: nama shift } atau null
  */
-function isHandoverTime() {
+function getHandoverStatus() {
     const now = new Date();
     const hour = now.getHours();
     const minute = now.getMinutes();
     const totalMinutes = hour * 60 + minute;
     
-    // Hitung waktu handover untuk setiap shift
-    const handoverTimes = [
-        { shift: 'Morning', time: (SHIFT_TIMES.Morning.end * 60) - HANDOVER_MINUTES_BEFORE },    // 1:45 PM
-        { shift: 'Afternoon', time: (SHIFT_TIMES.Afternoon.end * 60) - HANDOVER_MINUTES_BEFORE }, // 9:45 PM
-        { shift: 'Night', time: (SHIFT_TIMES.Night.start * 60) - HANDOVER_MINUTES_BEFORE }        // 5:45 AM (next day)
+    // Define shift transition times
+    const transitions = [
+        { hour: 6, shift: 'Morning', prevShift: 'Night' },
+        { hour: 14, shift: 'Afternoon', prevShift: 'Morning' },
+        { hour: 22, shift: 'Night', prevShift: 'Afternoon' }
     ];
     
-    // Check untuk Night shift (special case karena melewati midnight)
-    if (hour >= 5 && hour < 6) {
-        const nightHandoverStart = (6 * 60) - HANDOVER_MINUTES_BEFORE; // 5:45 AM
-        if (totalMinutes >= nightHandoverStart && totalMinutes < 6 * 60) {
-            return true;
-        }
-    }
-    
-    // Check untuk Morning dan Afternoon shift
-    for (const handover of handoverTimes) {
-        const handoverStart = handover.time;
-        const handoverEnd = handover.time + HANDOVER_MINUTES_BEFORE;
+    for (const transition of transitions) {
+        const transitionMinutes = transition.hour * 60;
+        const phaseAStart = transitionMinutes - HANDOVER_MINUTES_BEFORE;
+        const phaseAEnd = transitionMinutes;
+        const phaseBStart = transitionMinutes;
+        const phaseBEnd = transitionMinutes + HANDOVER_MINUTES_AFTER;
         
-        if (totalMinutes >= handoverStart && totalMinutes < handoverEnd) {
-            return true;
+        // Check Phase A (10 menit sebelum shift berakhir)
+        if (totalMinutes >= phaseAStart && totalMinutes < phaseAEnd) {
+            return {
+                phase: 'A',
+                shift: transition.prevShift,
+                nextShift: transition.shift
+            };
+        }
+        
+        // Check Phase B (10 menit setelah shift mulai)
+        if (totalMinutes >= phaseBStart && totalMinutes < phaseBEnd) {
+            return {
+                phase: 'B',
+                shift: transition.shift,
+                prevShift: transition.prevShift
+            };
         }
     }
     
-    return false;
+    // Special case untuk Night shift (melewati midnight)
+    // Phase A: 21:50 - 22:00 (10 menit sebelum 22:00)
+    if (hour === 21 && minute >= 50) {
+        return {
+            phase: 'A',
+            shift: 'Afternoon',
+            nextShift: 'Night'
+        };
+    }
+    
+    // Phase B untuk Night: 22:00 - 22:10
+    if (hour === 22 && minute < 10) {
+        return {
+            phase: 'B',
+            shift: 'Night',
+            prevShift: 'Afternoon'
+        };
+    }
+    
+    // Phase A untuk Morning: 05:50 - 06:00
+    if (hour === 5 && minute >= 50) {
+        return {
+            phase: 'A',
+            shift: 'Night',
+            nextShift: 'Morning'
+        };
+    }
+    
+    // Phase B untuk Morning: 06:00 - 06:10
+    if (hour === 6 && minute < 10) {
+        return {
+            phase: 'B',
+            shift: 'Morning',
+            prevShift: 'Night'
+        };
+    }
+    
+    return null;
 }
 
 /**
@@ -130,52 +189,52 @@ function getEfficiencyColor(efficiency) {
 }
 
 /**
- * Render satu production order card
+ * Render satu production order card (Horizontal Layout untuk TV Display)
+ * Layout: 2 kolom (Info Kiri + Efficiency Kanan) + KPI Grid Horizontal di bawah
  * @param {Object} order - Production order object
- * @returns {string} HTML string untuk card
+ * @returns {string} HTML string untuk single large card dengan horizontal layout
  */
-function renderOrderCard(order) {
+function renderSingleOrderCard(order) {
     const efficiencyColor = getEfficiencyColor(order.efficiency_percent);
     
     return `
-        <div class="bg-white/10 backdrop-blur-lg rounded-xl p-6 border-2 border-sonoco-green/30 hover:border-sonoco-green transition-all">
-            <!-- Header -->
-            <div class="flex justify-between items-start mb-4">
-                <div>
-                    <h3 class="text-2xl font-bold text-white">${order.machine_name}</h3>
-                    <p class="text-sonoco-green text-lg">${order.shift_name} Shift</p>
+        <div class="single-card bg-white/10 backdrop-blur-lg rounded-3xl p-6 border-4 border-sonoco-green/50 shadow-2xl">
+            <!-- Top Section: 2 Kolom Horizontal (Info Kiri + Efficiency Kanan) -->
+            <div class="card-top-section">
+                <!-- LEFT COLUMN: Machine Info (Compact) -->
+                <div class="card-left-info">
+                    <h2 class="tv-machine-name font-bold text-white">${order.machine_name}</h2>
+                    <p class="tv-shift-name text-sonoco-green font-semibold">Shift ${order.shift_name}</p>
+                    <p class="tv-date text-gray-300">${order.order_date}</p>
+                    <p class="tv-order-info text-gray-400">Order #${order.id} | Created: ${new Date(order.created_at).toLocaleString('id-ID')}</p>
                 </div>
-                <div class="text-right">
-                    <div class="text-gray-400 text-sm">Order #${order.id}</div>
-                    <div class="text-gray-300 text-sm">${order.order_date}</div>
+                
+                <!-- RIGHT COLUMN: Efficiency Badge (Dominant) -->
+                <div class="card-right-efficiency">
+                    <div class="${efficiencyColor} rounded-2xl tv-efficiency-badge text-center">
+                        <div class="font-bold">${order.efficiency_percent.toFixed(1)}%</div>
+                        <div class="tv-efficiency-label">Efficiency</div>
+                    </div>
                 </div>
             </div>
             
-            <!-- Efficiency Badge -->
-            <div class="mb-6">
-                <div class="inline-block ${efficiencyColor} px-6 py-3 rounded-lg">
-                    <div class="text-4xl font-bold">${order.efficiency_percent.toFixed(1)}%</div>
-                    <div class="text-sm">Efficiency</div>
+            <!-- Bottom Section: KPI Grid (4 Kolom Horizontal) -->
+            <div class="kpi-grid">
+                <div class="kpi-box bg-black/30">
+                    <div class="kpi-label text-gray-400">Target</div>
+                    <div class="kpi-value text-white">${order.target_qty.toLocaleString('id-ID')}</div>
                 </div>
-            </div>
-            
-            <!-- Quantities Grid -->
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-black/20 rounded-lg p-4">
-                    <div class="text-gray-400 text-sm mb-1">Target</div>
-                    <div class="text-3xl font-bold text-white">${order.target_qty}</div>
+                <div class="kpi-box bg-black/30">
+                    <div class="kpi-label text-gray-400">Completed</div>
+                    <div class="kpi-value text-sonoco-green">${order.completed_qty.toLocaleString('id-ID')}</div>
                 </div>
-                <div class="bg-black/20 rounded-lg p-4">
-                    <div class="text-gray-400 text-sm mb-1">Completed</div>
-                    <div class="text-3xl font-bold text-sonoco-green">${order.completed_qty}</div>
+                <div class="kpi-box bg-black/30">
+                    <div class="kpi-label text-gray-400">WIP</div>
+                    <div class="kpi-value text-yellow-400">${order.wip_qty.toLocaleString('id-ID')}</div>
                 </div>
-                <div class="bg-black/20 rounded-lg p-4">
-                    <div class="text-gray-400 text-sm mb-1">WIP</div>
-                    <div class="text-3xl font-bold text-yellow-400">${order.wip_qty}</div>
-                </div>
-                <div class="bg-black/20 rounded-lg p-4">
-                    <div class="text-gray-400 text-sm mb-1">Pending</div>
-                    <div class="text-3xl font-bold text-gray-300">${order.pending_qty}</div>
+                <div class="kpi-box bg-black/30">
+                    <div class="kpi-label text-gray-400">Pending</div>
+                    <div class="kpi-value text-gray-300">${order.pending_qty.toLocaleString('id-ID')}</div>
                 </div>
             </div>
         </div>
@@ -183,32 +242,56 @@ function renderOrderCard(order) {
 }
 
 /**
- * Render semua production orders ke grid
+ * Render production order ke display
+ * REAL-TIME LOGIC: Hanya tampilkan 1 order yang aktif untuk shift dan tanggal saat ini
  */
 function renderOrders() {
     const loadingEl = document.getElementById('loading');
-    const gridEl = document.getElementById('orders-grid');
+    const singleCardContainer = document.getElementById('single-card-container');
     const emptyEl = document.getElementById('empty-state');
+    const emptyInfoEl = document.getElementById('empty-state-info');
     
     // Hide loading
     loadingEl.classList.add('hidden');
     
-    if (currentOrders.length === 0) {
+    // Get current shift dan today's date
+    const currentShift = getCurrentShift();
+    const todayDate = getTodayDate();
+    
+    // Filter orders: hanya yang sesuai shift saat ini dan tanggal hari ini
+    const activeOrders = currentOrders.filter(order => {
+        return order.shift_name === currentShift && order.order_date === todayDate;
+    });
+    
+    if (activeOrders.length === 0) {
         // Show empty state
-        gridEl.classList.add('hidden');
+        singleCardContainer.classList.add('hidden');
         emptyEl.classList.remove('hidden');
-    } else {
-        // Show grid dengan orders
-        emptyEl.classList.add('hidden');
-        gridEl.classList.remove('hidden');
         
-        // Render cards
-        gridEl.innerHTML = currentOrders.map(order => renderOrderCard(order)).join('');
+        // Update empty state info
+        const machineName = selectedMachineId === 'all' 
+            ? 'semua mesin' 
+            : availableMachines.find(m => m.id === parseInt(selectedMachineId))?.name || 'mesin terpilih';
+        
+        emptyInfoEl.textContent = `${machineName} | Shift ${currentShift} | ${todayDate}`;
+        
+    } else {
+        // Show single card (ambil order pertama jika ada multiple)
+        // Dalam real scenario, seharusnya hanya ada 1 order per machine per shift per date
+        const activeOrder = activeOrders[0];
+        
+        emptyEl.classList.add('hidden');
+        singleCardContainer.classList.remove('hidden');
+        
+        // Render single large card
+        singleCardContainer.innerHTML = renderSingleOrderCard(activeOrder);
     }
     
     // Update last update time
     const now = new Date().toLocaleTimeString('id-ID');
     document.getElementById('last-update').textContent = now;
+    
+    console.log(`✓ Display updated: ${activeOrders.length} active order(s) for ${currentShift} shift on ${todayDate}`);
 }
 
 /**
@@ -239,12 +322,12 @@ async function fetchOrders() {
         
     } catch (error) {
         console.error('Error fetching orders:', error);
-        // Tampilkan error state
+        // Tampilkan error state dengan viewport units
         document.getElementById('loading').innerHTML = `
-            <div class="text-center py-20">
-                <div class="text-6xl mb-4">⚠️</div>
-                <p class="text-2xl text-white mb-4">Gagal memuat data</p>
-                <p class="text-lg text-gray-400">${error.message}</p>
+            <div class="text-center">
+                <div class="loading-icon">⚠️</div>
+                <p class="loading-text text-white mb-4">Gagal memuat data</p>
+                <p class="text-gray-400" style="font-size: 2vh;">${error.message}</p>
             </div>
         `;
     }
@@ -341,12 +424,184 @@ function navigateToNextMachine() {
 }
 
 /**
+ * Generate messages untuk Phase A (Shift berakhir)
+ * @param {string} shiftName - Nama shift yang berakhir
+ * @param {Object} stats - Statistik shift
+ * @returns {Array} Array of message objects
+ */
+function generatePhaseAMessages(shiftName, stats) {
+    return [
+        {
+            type: 'summary',
+            html: `
+                <div class="carousel-message message-summary">
+                    <h3 class="message-title text-sonoco-green font-bold">Ringkasan Produksi Shift ${shiftName}</h3>
+                    <div class="message-stats-grid">
+                        <div class="message-stat-item">
+                            <div class="message-stat-label text-gray-400">Total Orders</div>
+                            <div class="message-stat-value text-white">${stats.totalOrders}</div>
+                        </div>
+                        <div class="message-stat-item">
+                            <div class="message-stat-label text-gray-400">Avg Efficiency</div>
+                            <div class="message-stat-value text-sonoco-green">${stats.avgEfficiency}%</div>
+                        </div>
+                        <div class="message-stat-item">
+                            <div class="message-stat-label text-gray-400">Total Target</div>
+                            <div class="message-stat-value text-white">${stats.totalTarget.toLocaleString('id-ID')}</div>
+                        </div>
+                        <div class="message-stat-item">
+                            <div class="message-stat-label text-gray-400">Total Completed</div>
+                            <div class="message-stat-value text-sonoco-green">${stats.totalCompleted.toLocaleString('id-ID')}</div>
+                        </div>
+                    </div>
+                    <p class="message-subtitle text-white font-semibold">Terima kasih atas kerja keras Anda! 💪</p>
+                </div>
+            `
+        },
+        {
+            type: 'kaizen',
+            html: `
+                <div class="carousel-message">
+                    <div class="handover-icon">🧹</div>
+                    <h3 class="message-title text-white font-bold">Kaizen & 5S</h3>
+                    <p class="message-text text-gray-300">
+                        Pastikan area kerja dirapikan kembali (5S/Kaizen)<br>
+                        & Sampah produksi dibuang dengan benar
+                    </p>
+                </div>
+            `
+        },
+        {
+            type: 'safety',
+            html: `
+                <div class="carousel-message">
+                    <div class="handover-icon">🔧</div>
+                    <h3 class="message-title text-white font-bold">Safety Check</h3>
+                    <p class="message-text text-gray-300">
+                        Cek kembali alat kerja dan pastikan<br>
+                        mesin aman untuk regu berikutnya
+                    </p>
+                </div>
+            `
+        }
+    ];
+}
+
+/**
+ * Generate messages untuk Phase B (Shift baru dimulai)
+ * @param {string} shiftName - Nama shift yang baru dimulai
+ * @returns {Array} Array of message objects
+ */
+function generatePhaseBMessages(shiftName) {
+    return [
+        {
+            type: 'welcome',
+            html: `
+                <div class="carousel-message">
+                    <div class="handover-icon">🎉</div>
+                    <h3 class="message-title text-sonoco-green font-bold">Selamat Datang Shift ${shiftName}!</h3>
+                    <p class="message-text text-white">
+                        Mari kita capai target produksi hari ini! 💪
+                    </p>
+                </div>
+            `
+        },
+        {
+            type: 'apd',
+            html: `
+                <div class="carousel-message">
+                    <div class="handover-icon">🦺</div>
+                    <h3 class="message-title text-white font-bold">Safety APD</h3>
+                    <p class="message-text text-gray-300">
+                        Gunakan APD lengkap<br>
+                        sebelum memulai bekerja
+                    </p>
+                </div>
+            `
+        },
+        {
+            type: 'safety-first',
+            html: `
+                <div class="carousel-message">
+                    <div class="handover-icon">⚠️</div>
+                    <h3 class="message-title text-white font-bold">Safety First</h3>
+                    <p class="message-text text-gray-300">
+                        Utamakan Keselamatan Kerja<br>
+                        Target tercapai, pulang dengan selamat!
+                    </p>
+                </div>
+            `
+        }
+    ];
+}
+
+/**
+ * Rotate ke message berikutnya dalam carousel
+ */
+function rotateMessage() {
+    const carousel = document.getElementById('message-carousel');
+    const indicators = document.getElementById('carousel-indicators');
+    const messages = carousel.querySelectorAll('.carousel-message');
+    const dots = indicators.querySelectorAll('.carousel-dot');
+    
+    if (messages.length === 0) return;
+    
+    // Hide current message
+    messages[currentMessageIndex].classList.remove('active');
+    dots[currentMessageIndex].classList.remove('active');
+    
+    // Move to next message (loop)
+    currentMessageIndex = (currentMessageIndex + 1) % messages.length;
+    
+    // Show next message
+    messages[currentMessageIndex].classList.add('active');
+    dots[currentMessageIndex].classList.add('active');
+}
+
+/**
+ * Start message rotation
+ */
+function startMessageRotation() {
+    // Stop existing rotation if any
+    if (messageRotationIntervalId) {
+        clearInterval(messageRotationIntervalId);
+    }
+    
+    // Reset to first message
+    currentMessageIndex = 0;
+    const carousel = document.getElementById('message-carousel');
+    const indicators = document.getElementById('carousel-indicators');
+    const messages = carousel.querySelectorAll('.carousel-message');
+    const dots = indicators.querySelectorAll('.carousel-dot');
+    
+    if (messages.length > 0) {
+        messages[0].classList.add('active');
+        dots[0].classList.add('active');
+    }
+    
+    // Start rotation every 10 seconds
+    messageRotationIntervalId = setInterval(rotateMessage, MESSAGE_ROTATION_INTERVAL);
+    console.log('✓ Message rotation started (10s interval)');
+}
+
+/**
+ * Stop message rotation
+ */
+function stopMessageRotation() {
+    if (messageRotationIntervalId) {
+        clearInterval(messageRotationIntervalId);
+        messageRotationIntervalId = null;
+        console.log('✓ Message rotation stopped');
+    }
+}
+
+/**
  * Hitung statistik shift untuk handover summary
  * @param {string} shiftName - Nama shift
  * @returns {Object} Statistik shift
  */
 function calculateShiftStats(shiftName) {
-    const shiftOrders = currentOrders.filter(order => order.shift_name === shiftName);
+    const shiftOrders = allOrders.filter(order => order.shift_name === shiftName);
     
     if (shiftOrders.length === 0) {
         return {
@@ -370,59 +625,63 @@ function calculateShiftStats(shiftName) {
 }
 
 /**
- * Show shift handover overlay
+ * Show shift handover overlay dengan phase tertentu
+ * @param {string} phase - 'A' atau 'B'
+ * @param {string} shift - Nama shift
+ * @param {string} otherShift - Shift lainnya (nextShift untuk Phase A, prevShift untuk Phase B)
  */
-function showHandoverOverlay() {
-    if (isHandoverActive) return; // Sudah aktif, skip
+function showHandoverOverlay(phase = 'A', shift = null, otherShift = null) {
+    if (isHandoverActive && currentHandoverPhase === phase) return; // Sudah aktif dengan phase yang sama
     
     isHandoverActive = true;
-    const currentShift = getCurrentShift();
-    const nextShift = getNextShift(currentShift);
-    const stats = calculateShiftStats(currentShift);
+    currentHandoverPhase = phase;
+    
+    // Determine shifts
+    const currentShift = shift || getCurrentShift();
+    const nextShift = otherShift || getNextShift(currentShift);
     
     const overlay = document.getElementById('handover-overlay');
-    const content = document.getElementById('handover-content');
+    const iconEl = document.getElementById('handover-icon');
+    const titleEl = document.getElementById('handover-title');
+    const phaseEl = document.getElementById('handover-phase');
+    const carousel = document.getElementById('message-carousel');
+    const indicators = document.getElementById('carousel-indicators');
     
-    // Generate handover content
-    content.innerHTML = `
-        <div class="mb-8">
-            <p class="text-5xl font-bold text-sonoco-green mb-4">Shift ${currentShift} Berakhir</p>
-            <p class="text-2xl text-gray-400">Terima kasih atas kerja keras Anda!</p>
-        </div>
+    let messages = [];
+    
+    if (phase === 'A') {
+        // Phase A: Shift berakhir
+        const stats = calculateShiftStats(currentShift);
+        messages = generatePhaseAMessages(currentShift, stats);
         
-        <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-8">
-            <h3 class="text-4xl font-bold text-white mb-6">Ringkasan Produksi</h3>
-            <div class="grid grid-cols-2 gap-6 text-left">
-                <div>
-                    <div class="text-gray-400 text-xl mb-2">Total Orders</div>
-                    <div class="text-5xl font-bold text-white">${stats.totalOrders}</div>
-                </div>
-                <div>
-                    <div class="text-gray-400 text-xl mb-2">Avg Efficiency</div>
-                    <div class="text-5xl font-bold text-sonoco-green">${stats.avgEfficiency}%</div>
-                </div>
-                <div>
-                    <div class="text-gray-400 text-xl mb-2">Total Target</div>
-                    <div class="text-5xl font-bold text-white">${stats.totalTarget}</div>
-                </div>
-                <div>
-                    <div class="text-gray-400 text-xl mb-2">Total Completed</div>
-                    <div class="text-5xl font-bold text-sonoco-green">${stats.totalCompleted}</div>
-                </div>
-            </div>
-        </div>
+        iconEl.textContent = '👋';
+        titleEl.textContent = `Shift ${currentShift} Berakhir`;
+        phaseEl.textContent = `Phase A: Persiapan Handover ke Shift ${nextShift}`;
         
-        <div class="mb-8">
-            <p class="text-4xl font-bold text-white mb-4">Selamat Datang</p>
-            <p class="text-5xl font-bold text-sonoco-green">Shift ${nextShift}!</p>
-            <p class="text-2xl text-gray-400 mt-4">Mari kita capai target produksi hari ini 💪</p>
-        </div>
-    `;
+    } else {
+        // Phase B: Shift baru dimulai
+        messages = generatePhaseBMessages(currentShift);
+        
+        iconEl.textContent = '🎉';
+        titleEl.textContent = `Shift ${currentShift} Dimulai`;
+        phaseEl.textContent = `Phase B: Selamat Datang!`;
+    }
+    
+    // Render messages
+    carousel.innerHTML = messages.map(msg => msg.html).join('');
+    
+    // Render indicators
+    indicators.innerHTML = messages.map((_, index) => 
+        `<div class="carousel-dot ${index === 0 ? 'active' : ''}"></div>`
+    ).join('');
     
     // Show overlay
     overlay.classList.add('active');
     
-    console.log(`🎉 Shift handover: ${currentShift} → ${nextShift}`);
+    // Start message rotation
+    startMessageRotation();
+    
+    console.log(`🎉 Shift handover Phase ${phase}: ${currentShift} ${phase === 'A' ? '→' : '←'} ${nextShift}`);
 }
 
 /**
@@ -432,19 +691,32 @@ function hideHandoverOverlay() {
     const overlay = document.getElementById('handover-overlay');
     overlay.classList.remove('active');
     isHandoverActive = false;
+    currentHandoverPhase = null;
+    stopMessageRotation();
     console.log('✓ Handover overlay hidden');
 }
 
 /**
- * Check handover status dan show/hide overlay
+ * Check handover status dan show/hide overlay dengan automatic phase transition
  */
 function checkHandover() {
-    const shouldShowHandover = isHandoverTime();
+    const handoverStatus = getHandoverStatus();
     
-    if (shouldShowHandover && !isHandoverActive) {
-        showHandoverOverlay();
-    } else if (!shouldShowHandover && isHandoverActive) {
-        hideHandoverOverlay();
+    if (handoverStatus) {
+        // Ada handover aktif
+        if (!isHandoverActive || currentHandoverPhase !== handoverStatus.phase) {
+            // Show atau update phase
+            if (handoverStatus.phase === 'A') {
+                showHandoverOverlay('A', handoverStatus.shift, handoverStatus.nextShift);
+            } else {
+                showHandoverOverlay('B', handoverStatus.shift, handoverStatus.prevShift);
+            }
+        }
+    } else {
+        // Tidak ada handover, hide jika sedang aktif
+        if (isHandoverActive) {
+            hideHandoverOverlay();
+        }
     }
 }
 
@@ -476,6 +748,30 @@ async function initTVMode() {
     document.getElementById('btn-next-machine').addEventListener('click', navigateToNextMachine);
     console.log('✓ Machine filter controls initialized');
     
+    // Setup event listener untuk Test Handover button
+    document.getElementById('btn-test-handover').addEventListener('click', () => {
+        console.log('🧪 Test Handover button clicked - Starting simulation');
+        
+        const currentShift = getCurrentShift();
+        const nextShift = getNextShift(currentShift);
+        
+        // Phase A: 10 detik (3 messages × 10 detik = 30 detik total, tapi kita paksa 10 detik untuk testing)
+        showHandoverOverlay('A', currentShift, nextShift);
+        
+        // Setelah 10 detik, otomatis pindah ke Phase B
+        setTimeout(() => {
+            console.log('🧪 Transitioning to Phase B');
+            showHandoverOverlay('B', nextShift, currentShift);
+            
+            // Setelah 10 detik lagi, hide overlay
+            setTimeout(() => {
+                console.log('🧪 Test simulation complete');
+                hideHandoverOverlay();
+            }, 10000);
+        }, 10000);
+    });
+    console.log('✓ Test Handover button initialized');
+    
     console.log('✅ TV Mode initialized successfully');
 }
 
@@ -490,4 +786,5 @@ if (document.readyState === 'loading') {
 window.addEventListener('beforeunload', () => {
     if (refreshIntervalId) clearInterval(refreshIntervalId);
     if (handoverCheckIntervalId) clearInterval(handoverCheckIntervalId);
+    if (messageRotationIntervalId) clearInterval(messageRotationIntervalId);
 });
