@@ -226,6 +226,43 @@ bash test_api.sh
 - Push notifications
 - Multi-language support
 
+---
+
+## ☁️ Deployment ke Production (GCP)
+
+Dashboard ini siap untuk di-deploy ke **Google Cloud Platform (GCP)** menggunakan:
+- **Cloud Run** (Serverless Container)
+- **Cloud SQL** (PostgreSQL)
+- **Artifact Registry** (Docker Images)
+- **Secret Manager** (Credentials)
+
+### Quick Deploy
+
+```bash
+# Set variables
+export PROJECT_ID="your-project-id"
+export REGION="asia-southeast2"
+
+# Build dan deploy
+gcloud builds submit --tag ${REGION}-docker.pkg.dev/${PROJECT_ID}/shopfloor/shopfloor-dashboard:latest
+gcloud run deploy shopfloor-dashboard --image=${REGION}-docker.pkg.dev/${PROJECT_ID}/shopfloor/shopfloor-dashboard:latest
+```
+
+### Dokumentasi Deployment
+
+- **📘 GCP_DEPLOYMENT_GUIDE.md** - Panduan lengkap step-by-step
+- **⚡ QUICK_DEPLOY.md** - Quick reference untuk deployment cepat
+
+### Files untuk Production
+
+- ✅ `Dockerfile` - Production-ready container dengan Gunicorn
+- ✅ `.dockerignore` - Exclude unnecessary files
+- ✅ `cloudbuild.yaml` - CI/CD pipeline configuration
+- ✅ `.env.production.example` - Production environment variables template
+- ✅ `config.py` - Support Cloud SQL Unix Socket connection
+
+---
+
 ## 📄 License
 
 MIT License - Shop Floor Dashboard MVP

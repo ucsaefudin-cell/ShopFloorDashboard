@@ -1,0 +1,57 @@
+# Docker Compose untuk Local Development dan Testing
+# Menjalankan aplikasi dan PostgreSQL dalam containers
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:14-alpine
+    container_name: shopfloor-db
+    environment:
+      POSTGRES_DB: shopfloor_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopfloor-network
+
+  # Flask Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shopfloor-app
+    environment:
+      # Database connection (connect ke service 'db')
+      DATABASE_URL: postgresql://postgres:password@db:5432/shopfloor_db
+      FLASK_ENV: development
+      SECRET_KEY: dev-secret-key-for-testing
+      CORS_ORIGINS: "*"
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - shopfloor-network
+    # Mount code untuk hot-reload (optional, untuk development)
+    # volumes:
+    #   - .:/app
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  shopfloor-network:
+    driver: bridge

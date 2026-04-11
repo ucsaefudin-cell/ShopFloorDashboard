@@ -1,0 +1,84 @@
+# .dockerignore - File yang tidak perlu di-copy ke Docker image
+
+# Python cache dan compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+env/
+venv/
+ENV/
+.venv/
+
+# IDE dan editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# Environment variables (jangan include .env ke container!)
+.env
+.env.*
+
+# Testing dan development files
+*.db
+*.sqlite
+*.sqlite3
+test_*.py
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation files (tidak diperlukan di runtime)
+*.md
+docs/
+.kiro/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Logs
+*.log
+logs/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Docker files (tidak perlu di-copy ke dalam image)
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# CI/CD files
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Development scripts
+test_api.sh
+
+
+# Large files yang tidak diperlukan
+*.tar
+*.zip
+*.gz

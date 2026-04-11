@@ -24,7 +24,8 @@ def clear_data(db):
 
 def seed_machines(db):
     """
-    Seed data master mesin dengan 5 mesin berbeda.
+    Seed data master mesin untuk Paper/Packaging Manufacturing Plant.
+    PT Papertech / Sonoco - Mesin produksi kertas dan packaging.
     
     Args:
         db: SQLAlchemy database session
@@ -32,14 +33,14 @@ def seed_machines(db):
     Returns:
         list: List of Machine objects yang telah dibuat
     """
-    print("Seeding data mesin...")
+    print("Seeding data mesin (Paper/Packaging Manufacturing)...")
     
     machines = [
-        Machine(machine_code='CNC-001', machine_name='CNC Milling Machine 1', is_active=True),
-        Machine(machine_code='PRESS-002', machine_name='Hydraulic Press 2', is_active=True),
-        Machine(machine_code='WELD-003', machine_name='Welding Station 3', is_active=True),
-        Machine(machine_code='PACK-004', machine_name='Packaging Line 4', is_active=True),
-        Machine(machine_code='QC-005', machine_name='Quality Control Station 5', is_active=True),
+        Machine(machine_code='PM-001', machine_name='Paper Machine 1', is_active=True),
+        Machine(machine_code='SR-002', machine_name='Slitter Rewinder 2', is_active=True),
+        Machine(machine_code='CW-003', machine_name='Core Winder 3', is_active=True),
+        Machine(machine_code='EXT-004', machine_name='Extruder Line 4', is_active=True),
+        Machine(machine_code='PS-005', machine_name='Pulping Station 5', is_active=True),
     ]
     
     db.add_all(machines)
@@ -49,223 +50,242 @@ def seed_machines(db):
     for machine in machines:
         db.refresh(machine)
     
-    print(f"✓ {len(machines)} mesin berhasil dibuat")
+    print(f"✓ {len(machines)} mesin Paper/Packaging berhasil dibuat")
     return machines
 
 
 def seed_production_orders(db, machines):
     """
-    Seed data production orders dengan variasi efisiensi.
-    Membuat 20+ orders dengan berbagai skenario:
-    - Below target (efisiensi < 70%)
-    - On target (efisiensi 70-90%)
-    - Above target (efisiensi > 90%)
+    Seed data production orders untuk Paper/Packaging Manufacturing.
+    Target quantities disesuaikan dengan kapasitas mesin paper/packaging.
+    Membuat 20+ orders dengan berbagai skenario efisiensi.
     
     Args:
         db: SQLAlchemy database session
         machines: List of Machine objects untuk referensi
     """
-    print("Seeding data production orders...")
+    print("Seeding data production orders (Paper/Packaging)...")
     
     shifts = ['Morning', 'Afternoon', 'Night']
     today = date.today()
     
     orders = []
     
-    # Skenario 1: Orders dengan efisiensi tinggi (>90%)
+    # Skenario 1: Paper Machine 1 - High volume production (efisiensi tinggi >90%)
     orders.extend([
         ProductionOrder(
-            machine_id=machines[0].id,
+            machine_id=machines[0].id,  # Paper Machine 1
             shift_name='Morning',
             order_date=today,
-            target_qty=500,
-            completed_qty=480,
-            wip_qty=15
-        ),
-        ProductionOrder(
-            machine_id=machines[1].id,
-            shift_name='Morning',
-            order_date=today,
-            target_qty=800,
-            completed_qty=750,
-            wip_qty=40
-        ),
-        ProductionOrder(
-            machine_id=machines[2].id,
-            shift_name='Afternoon',
-            order_date=today,
-            target_qty=600,
-            completed_qty=580,
-            wip_qty=10
-        ),
-    ])
-    
-    # Skenario 2: Orders dengan efisiensi sedang (70-90%)
-    orders.extend([
-        ProductionOrder(
-            machine_id=machines[0].id,
-            shift_name='Afternoon',
-            order_date=today,
-            target_qty=500,
-            completed_qty=400,
-            wip_qty=80
-        ),
-        ProductionOrder(
-            machine_id=machines[3].id,
-            shift_name='Morning',
-            order_date=today,
-            target_qty=1000,
-            completed_qty=750,
-            wip_qty=200
-        ),
-        ProductionOrder(
-            machine_id=machines[4].id,
-            shift_name='Afternoon',
-            order_date=today,
-            target_qty=300,
-            completed_qty=240,
-            wip_qty=50
-        ),
-    ])
-    
-    # Skenario 3: Orders dengan efisiensi rendah (<70%)
-    orders.extend([
-        ProductionOrder(
-            machine_id=machines[1].id,
-            shift_name='Night',
-            order_date=today,
-            target_qty=700,
-            completed_qty=350,
-            wip_qty=250
-        ),
-        ProductionOrder(
-            machine_id=machines[2].id,
-            shift_name='Morning',
-            order_date=today,
-            target_qty=400,
-            completed_qty=200,
+            target_qty=5000,  # 5000 reams kertas
+            completed_qty=4800,
             wip_qty=150
         ),
-    ])
-    
-    # Skenario 4: Orders dari hari kemarin
-    yesterday = today - timedelta(days=1)
-    orders.extend([
         ProductionOrder(
             machine_id=machines[0].id,
-            shift_name='Night',
-            order_date=yesterday,
-            target_qty=500,
-            completed_qty=500,
-            wip_qty=0
-        ),
-        ProductionOrder(
-            machine_id=machines[3].id,
             shift_name='Afternoon',
-            order_date=yesterday,
-            target_qty=900,
-            completed_qty=850,
-            wip_qty=50
+            order_date=today,
+            target_qty=5200,
+            completed_qty=4950,
+            wip_qty=200
         ),
     ])
     
-    # Skenario 5: Orders baru yang baru dimulai
+    # Skenario 2: Slitter Rewinder - Medium volume (efisiensi sedang 70-90%)
     orders.extend([
         ProductionOrder(
-            machine_id=machines[4].id,
+            machine_id=machines[1].id,  # Slitter Rewinder 2
             shift_name='Morning',
             order_date=today,
-            target_qty=250,
-            completed_qty=50,
-            wip_qty=100
+            target_qty=3000,  # 3000 rolls
+            completed_qty=2400,
+            wip_qty=450
         ),
-        ProductionOrder(
-            machine_id=machines[3].id,
-            shift_name='Night',
-            order_date=today,
-            target_qty=600,
-            completed_qty=100,
-            wip_qty=300
-        ),
-    ])
-    
-    # Skenario 6: Orders dengan over-achievement (>100%)
-    orders.extend([
         ProductionOrder(
             machine_id=machines[1].id,
             shift_name='Afternoon',
-            order_date=yesterday,
-            target_qty=500,
-            completed_qty=550,
-            wip_qty=0
+            order_date=today,
+            target_qty=3200,
+            completed_qty=2560,
+            wip_qty=500
         ),
         ProductionOrder(
-            machine_id=machines[2].id,
+            machine_id=machines[1].id,
             shift_name='Night',
-            order_date=yesterday,
-            target_qty=400,
-            completed_qty=420,
-            wip_qty=0
+            order_date=today,
+            target_qty=2800,
+            completed_qty=2100,
+            wip_qty=600
         ),
     ])
     
-    # Skenario 7: Orders dengan berbagai shift untuk variasi
-    two_days_ago = today - timedelta(days=2)
+    # Skenario 3: Core Winder - High efficiency
     orders.extend([
         ProductionOrder(
-            machine_id=machines[0].id,
-            shift_name='Night',
-            order_date=two_days_ago,
-            target_qty=450,
-            completed_qty=450,
-            wip_qty=0
-        ),
-        ProductionOrder(
-            machine_id=machines[4].id,
-            shift_name='Night',
+            machine_id=machines[2].id,  # Core Winder 3
+            shift_name='Morning',
             order_date=today,
-            target_qty=200,
-            completed_qty=150,
-            wip_qty=40
-        ),
-        ProductionOrder(
-            machine_id=machines[3].id,
-            shift_name='Afternoon',
-            order_date=today,
-            target_qty=850,
-            completed_qty=700,
-            wip_qty=100
-        ),
-        ProductionOrder(
-            machine_id=machines[2].id,
-            shift_name='Night',
-            order_date=today,
-            target_qty=550,
-            completed_qty=400,
+            target_qty=2500,  # 2500 cores
+            completed_qty=2350,
             wip_qty=120
         ),
         ProductionOrder(
-            machine_id=machines[1].id,
+            machine_id=machines[2].id,
+            shift_name='Afternoon',
+            order_date=today,
+            target_qty=2600,
+            completed_qty=2470,
+            wip_qty=100
+        ),
+    ])
+    
+    # Skenario 4: Extruder Line - Variable efficiency
+    orders.extend([
+        ProductionOrder(
+            machine_id=machines[3].id,  # Extruder Line 4
             shift_name='Morning',
-            order_date=yesterday,
-            target_qty=750,
-            completed_qty=720,
-            wip_qty=30
+            order_date=today,
+            target_qty=1800,  # 1800 kg plastic coating
+            completed_qty=1440,
+            wip_qty=300
         ),
         ProductionOrder(
-            machine_id=machines[0].id,
+            machine_id=machines[3].id,
+            shift_name='Afternoon',
+            order_date=today,
+            target_qty=2000,
+            completed_qty=1500,
+            wip_qty=400
+        ),
+        ProductionOrder(
+            machine_id=machines[3].id,
+            shift_name='Night',
+            order_date=today,
+            target_qty=1900,
+            completed_qty=1330,
+            wip_qty=450
+        ),
+    ])
+    
+    # Skenario 5: Pulping Station - Low efficiency (maintenance issues)
+    orders.extend([
+        ProductionOrder(
+            machine_id=machines[4].id,  # Pulping Station 5
+            shift_name='Morning',
+            order_date=today,
+            target_qty=4000,  # 4000 kg pulp
+            completed_qty=2400,
+            wip_qty=1200
+        ),
+        ProductionOrder(
+            machine_id=machines[4].id,
+            shift_name='Afternoon',
+            order_date=today,
+            target_qty=4200,
+            completed_qty=2520,
+            wip_qty=1400
+        ),
+    ])
+    
+    # Skenario 6: Orders dari hari kemarin (completed)
+    yesterday = today - timedelta(days=1)
+    orders.extend([
+        ProductionOrder(
+            machine_id=machines[0].id,  # Paper Machine 1
+            shift_name='Night',
+            order_date=yesterday,
+            target_qty=5000,
+            completed_qty=5000,
+            wip_qty=0
+        ),
+        ProductionOrder(
+            machine_id=machines[1].id,  # Slitter Rewinder 2
+            shift_name='Night',
+            order_date=yesterday,
+            target_qty=3000,
+            completed_qty=2850,
+            wip_qty=150
+        ),
+        ProductionOrder(
+            machine_id=machines[2].id,  # Core Winder 3
+            shift_name='Night',
+            order_date=yesterday,
+            target_qty=2500,
+            completed_qty=2500,
+            wip_qty=0
+        ),
+    ])
+    
+    # Skenario 7: Orders baru yang baru dimulai
+    orders.extend([
+        ProductionOrder(
+            machine_id=machines[3].id,  # Extruder Line 4
+            shift_name='Night',
+            order_date=today,
+            target_qty=1800,
+            completed_qty=360,
+            wip_qty=900
+        ),
+        ProductionOrder(
+            machine_id=machines[4].id,  # Pulping Station 5
+            shift_name='Night',
+            order_date=today,
+            target_qty=4000,
+            completed_qty=800,
+            wip_qty=2400
+        ),
+    ])
+    
+    # Skenario 8: Over-achievement (>100% efficiency)
+    orders.extend([
+        ProductionOrder(
+            machine_id=machines[0].id,  # Paper Machine 1
             shift_name='Morning',
             order_date=yesterday,
-            target_qty=500,
-            completed_qty=480,
-            wip_qty=20
+            target_qty=5000,
+            completed_qty=5250,  # Over-achievement
+            wip_qty=0
+        ),
+        ProductionOrder(
+            machine_id=machines[2].id,  # Core Winder 3
+            shift_name='Afternoon',
+            order_date=yesterday,
+            target_qty=2500,
+            completed_qty=2625,  # Over-achievement
+            wip_qty=0
+        ),
+    ])
+    
+    # Skenario 9: Mixed efficiency dari 2 hari lalu
+    two_days_ago = today - timedelta(days=2)
+    orders.extend([
+        ProductionOrder(
+            machine_id=machines[1].id,  # Slitter Rewinder 2
+            shift_name='Morning',
+            order_date=two_days_ago,
+            target_qty=3000,
+            completed_qty=3000,
+            wip_qty=0
+        ),
+        ProductionOrder(
+            machine_id=machines[3].id,  # Extruder Line 4
+            shift_name='Afternoon',
+            order_date=two_days_ago,
+            target_qty=2000,
+            completed_qty=1900,
+            wip_qty=100
         ),
     ])
     
     db.add_all(orders)
     db.commit()
     
-    print(f"✓ {len(orders)} production orders berhasil dibuat")
+    print(f"✓ {len(orders)} production orders Paper/Packaging berhasil dibuat")
+    print(f"  - Paper Machine 1: High volume (5000+ units)")
+    print(f"  - Slitter Rewinder: Medium volume (3000 rolls)")
+    print(f"  - Core Winder: Precision work (2500 cores)")
+    print(f"  - Extruder Line: Coating process (1800-2000 kg)")
+    print(f"  - Pulping Station: Raw material (4000 kg pulp)")
 
 
 def run_seeder():

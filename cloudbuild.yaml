@@ -1,0 +1,65 @@
+# Cloud Build Configuration untuk CI/CD Pipeline
+# Otomatis build dan deploy ke Cloud Run saat push ke repository
+
+steps:
+  # Step 1: Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/shopfloor/shopfloor-dashboard:$COMMIT_SHA'
+      - '-t'
+      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/shopfloor/shopfloor-dashboard:latest'
+      - '.'
+    id: 'build-image'
+
+  # Step 2: Push image ke Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/shopfloor/shopfloor-dashboard:$COMMIT_SHA'
+    id: 'push-image-sha'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/shopfloor/shopfloor-dashboard:latest'
+    id: 'push-image-latest'
+
+  # Step 3: Deploy ke Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'shopfloor-dashboard'
+      - '--image'
+      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/shopfloor/shopfloor-dashboard:$COMMIT_SHA'
+      - '--region'
+      - 'asia-southeast2'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--add-cloudsql-instances'
+      - '${_CLOUD_SQL_CONNECTION_NAME}'
+      - '--set-env-vars'
+      - 'CLOUD_SQL_CONNECTION_NAME=${_CLOUD_SQL_CONNECTION_NAME},DB_USER=${_DB_USER},DB_NAME=${_DB_NAME},FLASK_ENV=production'
+      - '--set-secrets'
+      - 'DB_PASS=${_DB_PASS_SECRET}:latest,SECRET_KEY=${_SECRET_KEY_SECRET}:latest'
+    id: 'deploy-cloud-run'
+
+# Substitution variables (set via Cloud Build trigger)
+substitutions:
+  _CLOUD_SQL_CONNECTION_NAME: 'your-project:asia-southeast2:shopfloor-db'
+  _DB_USER: 'postgres'
+  _DB_NAME: 'shopfloor_db'
+  _DB_PASS_SECRET: 'shopfloor-db-password'
+  _SECRET_KEY_SECRET: 'shopfloor-secret-key'
+
+# Timeout untuk build (default 10 menit)
+timeout: '1200s'
+
+# Options
+options:
+  machineType: 'N1_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY

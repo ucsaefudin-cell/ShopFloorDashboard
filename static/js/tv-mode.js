@@ -1,6 +1,6 @@
 /**
  * TV Mode untuk Shop Floor Dashboard
- * Zero-touch display dengan auto-refresh dan shift handover event
+ * Zero-touch display dengan auto-refresh, shift handover event, dan machine filtering
  */
 
 // Konstanta konfigurasi
@@ -14,6 +14,10 @@ const HANDOVER_MINUTES_BEFORE = 15; // Trigger 15 menit sebelum shift berakhir
 
 // State management
 let currentOrders = [];
+let allOrders = []; // Simpan semua orders untuk filtering
+let availableMachines = []; // List mesin yang tersedia
+let selectedMachineId = 'all'; // 'all' atau machine_id spesifik
+let currentMachineIndex = -1; // Index untuk prev/next navigation
 let isHandoverActive = false;
 let refreshIntervalId = null;
 let handoverCheckIntervalId = null;
@@ -213,11 +217,29 @@ function renderOrders() {
 async function fetchOrders() {
     try {
         const orders = await API.fetchProductionOrders();
-        currentOrders = orders;
-        renderOrders();
+        allOrders = orders; // Simpan semua orders
+        
+        // Extract unique machines dari orders
+        const machineMap = new Map();
+        orders.forEach(order => {
+            if (!machineMap.has(order.machine_id)) {
+                machineMap.set(order.machine_id, {
+                    id: order.machine_id,
+                    name: order.machine_name
+                });
+            }
+        });
+        availableMachines = Array.from(machineMap.values());
+        
+        // Populate machine filter dropdown
+        populateMachineFilter();
+        
+        // Apply filter
+        applyMachineFilter();
+        
     } catch (error) {
         console.error('Error fetching orders:', error);
-        // Tampilkan error state (optional)
+        // Tampilkan error state
         document.getElementById('loading').innerHTML = `
             <div class="text-center py-20">
                 <div class="text-6xl mb-4">⚠️</div>
@@ -226,6 +248,96 @@ async function fetchOrders() {
             </div>
         `;
     }
+}
+
+/**
+ * Populate machine filter dropdown dengan available machines
+ */
+function populateMachineFilter() {
+    const filterSelect = document.getElementById('machine-filter');
+    
+    // Clear existing options (kecuali "Semua Mesin")
+    filterSelect.innerHTML = '<option value="all">Semua Mesin</option>';
+    
+    // Add machine options
+    availableMachines.forEach(machine => {
+        const option = document.createElement('option');
+        option.value = machine.id;
+        option.textContent = machine.name;
+        filterSelect.appendChild(option);
+    });
+    
+    // Set selected value
+    filterSelect.value = selectedMachineId;
+}
+
+/**
+ * Apply machine filter ke orders
+ */
+function applyMachineFilter() {
+    if (selectedMachineId === 'all') {
+        // Show all orders
+        currentOrders = allOrders;
+    } else {
+        // Filter by selected machine
+        currentOrders = allOrders.filter(order => order.machine_id === parseInt(selectedMachineId));
+    }
+    
+    renderOrders();
+}
+
+/**
+ * Handle machine filter change
+ */
+function handleMachineFilterChange(event) {
+    selectedMachineId = event.target.value;
+    
+    // Update current machine index untuk prev/next navigation
+    if (selectedMachineId === 'all') {
+        currentMachineIndex = -1;
+    } else {
+        currentMachineIndex = availableMachines.findIndex(m => m.id === parseInt(selectedMachineId));
+    }
+    
+    applyMachineFilter();
+}
+
+/**
+ * Navigate ke machine sebelumnya
+ */
+function navigateToPrevMachine() {
+    if (availableMachines.length === 0) return;
+    
+    if (currentMachineIndex === -1) {
+        // Dari "all", pindah ke machine terakhir
+        currentMachineIndex = availableMachines.length - 1;
+    } else {
+        // Pindah ke machine sebelumnya (circular)
+        currentMachineIndex = (currentMachineIndex - 1 + availableMachines.length) % availableMachines.length;
+    }
+    
+    selectedMachineId = availableMachines[currentMachineIndex].id.toString();
+    document.getElementById('machine-filter').value = selectedMachineId;
+    applyMachineFilter();
+}
+
+/**
+ * Navigate ke machine berikutnya
+ */
+function navigateToNextMachine() {
+    if (availableMachines.length === 0) return;
+    
+    if (currentMachineIndex === -1) {
+        // Dari "all", pindah ke machine pertama
+        currentMachineIndex = 0;
+    } else {
+        // Pindah ke machine berikutnya (circular)
+        currentMachineIndex = (currentMachineIndex + 1) % availableMachines.length;
+    }
+    
+    selectedMachineId = availableMachines[currentMachineIndex].id.toString();
+    document.getElementById('machine-filter').value = selectedMachineId;
+    applyMachineFilter();
 }
 
 /**
@@ -357,6 +469,12 @@ async function initTVMode() {
     handoverCheckIntervalId = setInterval(checkHandover, 60000);
     checkHandover(); // Check immediately
     console.log('✓ Shift handover checker enabled');
+    
+    // Setup event listeners untuk machine filter
+    document.getElementById('machine-filter').addEventListener('change', handleMachineFilterChange);
+    document.getElementById('btn-prev-machine').addEventListener('click', navigateToPrevMachine);
+    document.getElementById('btn-next-machine').addEventListener('click', navigateToNextMachine);
+    console.log('✓ Machine filter controls initialized');
     
     console.log('✅ TV Mode initialized successfully');
 }
