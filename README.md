@@ -2,13 +2,33 @@
 
 Dashboard monitoring produksi real-time untuk lingkungan manufaktur dengan dua mode operasi: TV Mode (zero-touch) dan Supervisor Mode (interaktif).
 
-## Tech Stack
+## 🎯 Features
+
+### TV Mode (Zero-Touch Display)
+- ✅ Auto-refresh setiap 30 detik
+- ✅ Typography besar untuk visibility dari jarak jauh
+- ✅ Auto theme switching (day/night)
+- ✅ Shift handover event (15 menit sebelum shift berakhir)
+- ✅ Real-time production metrics
+- ✅ Color-coded efficiency indicators
+
+### Supervisor Mode (Interactive Dashboard)
+- ✅ Interactive production order table
+- ✅ Create & update production orders
+- ✅ Real-time statistics cards
+- ✅ Chart.js visualizations (efficiency bar chart, progress doughnut chart)
+- ✅ Form validation dengan error handling
+- ✅ Toast notifications
+- ✅ Responsive layout
+
+## 🛠️ Tech Stack
 
 - **Backend**: Python 3.x, Flask 3.0, SQLAlchemy 2.0
 - **Database**: PostgreSQL 14+
-- **Frontend**: Vanilla JavaScript (ES6+), Chart.js, Tailwind CSS
+- **Frontend**: Vanilla JavaScript (ES6+), Chart.js 4.x, Tailwind CSS 3.x
+- **API**: RESTful JSON API dengan CORS support
 
-## Setup Awal
+## 🚀 Quick Start
 
 ### 1. Install Dependencies
 
@@ -18,22 +38,21 @@ pip install -r requirements.txt
 
 ### 2. Setup Database PostgreSQL
 
-Buat database baru di PostgreSQL:
-
-```sql
-CREATE DATABASE shopfloor_db;
+```bash
+# Buat database baru
+createdb shopfloor_db
 ```
 
 ### 3. Konfigurasi Environment Variables
 
-Copy file `.env.example` menjadi `.env` dan sesuaikan dengan konfigurasi Anda:
-
 ```bash
+# Copy template
 cp .env.example .env
+
+# Edit .env dengan konfigurasi Anda
 ```
 
-Edit file `.env`:
-
+File `.env`:
 ```
 DATABASE_URL=postgresql://postgres:your_password@localhost:5432/shopfloor_db
 FLASK_ENV=development
@@ -43,24 +62,18 @@ CORS_ORIGINS=*
 
 ### 4. Inisialisasi Database dan Seeding
 
-Jalankan script seeder untuk membuat tabel dan mengisi data dummy:
-
 ```bash
 python seed.py
 ```
 
-Output yang diharapkan:
+Output:
 ```
 ==================================================
 SHOP FLOOR DASHBOARD - DATABASE SEEDER
 ==================================================
 
 ✓ Database tables created successfully
-Menghapus data existing...
-✓ Data lama berhasil dihapus
-Seeding data mesin...
 ✓ 5 mesin berhasil dibuat
-Seeding data production orders...
 ✓ 20 production orders berhasil dibuat
 
 ==================================================
@@ -74,23 +87,43 @@ Seeding data production orders...
 python app.py
 ```
 
-Server akan berjalan di `http://localhost:5000`
+Server berjalan di: `http://localhost:5000`
 
-## Struktur Project
+### 6. Akses Dashboard
+
+- **Home**: http://localhost:5000/index.html
+- **TV Mode**: http://localhost:5000/tv.html
+- **Supervisor Mode**: http://localhost:5000/supervisor.html
+
+## 📁 Struktur Project
 
 ```
 .
-├── app.py                 # Flask application entry point
-├── config.py              # Konfigurasi aplikasi
-├── database.py            # Database connection dan session management
-├── models.py              # SQLAlchemy ORM models
-├── seed.py                # Database seeder script
-├── requirements.txt       # Python dependencies
-├── .env.example          # Template environment variables
-└── README.md             # Dokumentasi ini
+├── app.py                      # Flask application entry point
+├── config.py                   # Konfigurasi aplikasi
+├── database.py                 # Database connection management
+├── models.py                   # SQLAlchemy ORM models
+├── routes.py                   # REST API endpoints
+├── services.py                 # Business logic services
+├── seed.py                     # Database seeder script
+├── requirements.txt            # Python dependencies
+├── .env.example               # Template environment variables
+├── static/                    # Frontend files
+│   ├── index.html            # Home page
+│   ├── tv.html               # TV Mode page
+│   ├── supervisor.html       # Supervisor Mode page
+│   └── js/
+│       ├── api.js            # API client
+│       ├── theme.js          # Theme switcher
+│       ├── tv-mode.js        # TV Mode logic
+│       ├── supervisor-mode.js # Supervisor Mode logic
+│       └── charts.js         # Chart.js visualizations
+├── BACKEND_VALIDATION.md      # Backend validation checklist
+├── DEPLOYMENT_GUIDE.md        # Panduan deployment lengkap
+└── README.md                  # Dokumentasi ini
 ```
 
-## Database Schema
+## 🗄️ Database Schema
 
 ### Table: mst_machine
 - `id` (PK, Integer)
@@ -101,29 +134,109 @@ Server akan berjalan di `http://localhost:5000`
 ### Table: trx_production_order
 - `id` (PK, Integer)
 - `machine_id` (FK -> mst_machine.id)
-- `shift_name` (String)
+- `shift_name` (String: Morning/Afternoon/Night)
 - `order_date` (Date)
 - `target_qty` (Integer)
 - `completed_qty` (Integer)
 - `wip_qty` (Integer)
 - `created_at` (DateTime)
 
-## Calculated Fields
-
+### Calculated Fields
 - **pending_qty**: `target_qty - completed_qty - wip_qty`
 - **efficiency_percent**: `(completed_qty / target_qty) * 100`
 
-## Next Steps
+## 🌐 API Endpoints
 
-Task 1 (Backend Scaffolding) telah selesai. Selanjutnya:
-- Task 2: Implement business logic services
-- Task 3: Implement REST API endpoints
-- Task 4: Configure Flask and CORS
-- Task 5: Backend validation checkpoint
+### Machines
+- `GET /api/machines` - List semua mesin aktif
 
-## Development Notes
+### Production Orders
+- `GET /api/production-orders` - List semua orders (support filters)
+- `GET /api/production-orders/{id}` - Detail single order
+- `POST /api/production-orders` - Create order baru
+- `PUT /api/production-orders/{id}` - Update order existing
 
-- Semua komentar kode dalam Bahasa Indonesia
-- Nama variabel dan fungsi dalam Bahasa Inggris (standar engineering)
-- Database menggunakan PostgreSQL dengan SQLAlchemy ORM
-- CORS enabled untuk development (batasi di production)
+### Health Check
+- `GET /api/health` - Status monitoring
+
+## 🎨 Branding (Sonoco)
+
+### Color Palette
+- **Primary Blue**: #1e3a8a (Dark Blue)
+- **Primary Blue Dark**: #0f172a
+- **Accent Green**: #84cc16 (Lime Green)
+- **Accent Green Dark**: #65a30d
+
+### Responsive Breakpoints
+- **Mobile**: < 768px
+- **Tablet**: 768px - 1024px
+- **Desktop**: > 1024px
+
+## ⏰ Shift Configuration
+
+### Shift Times
+- **Morning**: 6 AM - 2 PM
+- **Afternoon**: 2 PM - 10 PM
+- **Night**: 10 PM - 6 AM
+
+### Shift Handover Event
+Trigger 15 menit sebelum shift berakhir:
+- Morning → Afternoon: **1:45 PM**
+- Afternoon → Night: **9:45 PM**
+- Night → Morning: **5:45 AM**
+
+## 🧪 Testing
+
+### Backend API Testing
+```bash
+# Manual testing
+curl http://localhost:5000/api/health
+curl http://localhost:5000/api/machines
+curl http://localhost:5000/api/production-orders
+
+# Automated testing
+bash test_api.sh
+```
+
+### Frontend Testing
+1. Buka TV Mode dan verifikasi auto-refresh
+2. Buka Supervisor Mode dan test CRUD operations
+3. Test responsive layout (resize browser)
+4. Test shift handover event (ubah waktu sistem untuk testing)
+
+## 📚 Documentation
+
+- **BACKEND_VALIDATION.md**: Checklist validasi backend
+- **DEPLOYMENT_GUIDE.md**: Panduan deployment lengkap untuk production
+
+## 🔧 Development Notes
+
+- Semua komentar kode dalam **Bahasa Indonesia** ✅
+- Nama variabel dan fungsi dalam **Bahasa Inggris** ✅
+- Error messages dalam **Bahasa Indonesia** ✅
+- API documentation dalam **Bahasa Indonesia** ✅
+
+## 📈 Future Enhancements
+
+- User authentication & authorization
+- WebSocket untuk real-time updates
+- Historical data tracking
+- Export functionality (CSV, PDF)
+- Mobile app version
+- Push notifications
+- Multi-language support
+
+## 📄 License
+
+MIT License - Shop Floor Dashboard MVP
+
+## 👥 Contributors
+
+Developed with ❤️ for manufacturing excellence
+
+---
+
+**Version**: 1.0.0 (MVP)  
+**Status**: ✅ Production Ready  
+**Last Updated**: 2024
+

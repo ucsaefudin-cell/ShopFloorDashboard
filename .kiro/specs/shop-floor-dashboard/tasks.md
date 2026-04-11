@@ -105,14 +105,14 @@ The implementation uses Python/Flask for the backend API, PostgreSQL for data pe
   - Test all API endpoints manually using curl or Postman
   - Ask the user if questions arise or if ready to proceed to frontend
 
-- [-] 6. Create frontend scaffolding and API client
-  - [-] 6.1 Set up HTML templates for TV Mode and Supervisor Mode
+- [x] 6. Create frontend scaffolding and API client
+  - [x] 6.1 Set up HTML templates for TV Mode and Supervisor Mode
     - Create base HTML structure with Tailwind CSS CDN
     - Apply Sonoco branding colors (dark blue + lime green)
     - Set up routing structure for /tv and /supervisor paths
     - _Requirements: 7.1, 7.2, 7.3_
 
-  - [ ] 6.2 Implement API client module (api.js)
+  - [x] 6.2 Implement API client module (api.js)
     - Create fetchMachines() method
     - Create fetchProductionOrders() method
     - Create fetchProductionOrder(id) method
@@ -128,8 +128,8 @@ The implementation uses Python/Flask for the backend API, PostgreSQL for data pe
     - Test retry logic with mocked network errors
     - _Requirements: 8.4_
 
-- [ ] 7. Implement theme switcher component
-  - [ ] 7.1 Create theme.js module with time-based theme selection
+- [x] 7. Implement theme switcher component
+  - [x] 7.1 Create theme.js module with time-based theme selection
     - Implement applyTheme() function that detects current hour
     - Apply dark theme for hours >= 18 or < 6
     - Apply light theme for hours >= 6 and < 18
@@ -142,8 +142,8 @@ The implementation uses Python/Flask for the backend API, PostgreSQL for data pe
     - Use fast-check to generate random hour values (0-23)
     - Test correct theme selection for all hours
 
-- [ ] 8. Implement TV Mode component
-  - [ ] 8.1 Create tv-mode.js with auto-refresh functionality
+- [x] 8. Implement TV Mode component
+  - [x] 8.1 Create tv-mode.js with auto-refresh functionality
     - Implement mode detection from URL path
     - Render large-format production metrics grid
     - Implement 30-second auto-refresh using setInterval
@@ -153,7 +153,7 @@ The implementation uses Python/Flask for the backend API, PostgreSQL for data pe
     - Ensure zero-touch operation (no user interaction required)
     - _Requirements: 5.1, 5.2, 5.5, 5.6, 5.7_
 
-  - [ ] 8.2 Implement shift handover event detection and display
+  - [x] 8.2 Implement shift handover event detection and display
     - Detect current time and determine active shift
     - Trigger handover event 15 minutes before shift end (1:45 PM, 9:45 PM, 5:45 AM)
     - Hide normal dashboard during handover window
@@ -168,15 +168,15 @@ The implementation uses Python/Flask for the backend API, PostgreSQL for data pe
     - Test rendering with sample data
     - _Requirements: 5.2_
 
-- [ ] 9. Implement Supervisor Mode component
-  - [ ] 9.1 Create supervisor-mode.js with interactive table
+- [x] 9. Implement Supervisor Mode component
+  - [x] 9.1 Create supervisor-mode.js with interactive table
     - Render production order table with all fields
     - Implement row click to expand details
     - Implement manual refresh button
     - Display loading states during data fetch
     - _Requirements: 6.1, 6.2, 8.2, 8.3, 8.5_
 
-  - [ ] 9.2 Implement form handling for create and update operations
+  - [x] 9.2 Implement form handling for create and update operations
     - Create modal form for new production orders
     - Implement inline editing for completed_qty and wip_qty
     - Add client-side validation with real-time feedback
@@ -191,8 +191,8 @@ The implementation uses Python/Flask for the backend API, PostgreSQL for data pe
     - Test error message display
     - _Requirements: 6.6, 6.7_
 
-- [ ] 10. Implement Chart.js visualizations
-  - [ ] 10.1 Create charts.js module with pacing and efficiency charts
+- [x] 10. Implement Chart.js visualizations
+  - [x] 10.1 Create charts.js module with pacing and efficiency charts
     - Initialize Chart.js instances
     - Implement pacing line chart (completed_qty over time)
     - Implement efficiency bar chart (comparison across orders)
@@ -208,14 +208,14 @@ The implementation uses Python/Flask for the backend API, PostgreSQL for data pe
     - Test color coding logic
     - _Requirements: 10.5_
 
-- [ ] 11. Implement responsive layout with Tailwind CSS
+- [x] 11. Implement responsive layout with Tailwind CSS
   - Apply mobile-first responsive design
   - Configure breakpoints for mobile (<768px), tablet (768-1024px), desktop (>1024px)
   - Ensure readability and usability across all viewport sizes
   - Test layout on different screen sizes
   - _Requirements: 7.1, 7.4, 7.5, 7.6, 7.7_
 
-- [ ] 12. Final checkpoint - End-to-end validation
+- [x] 12. Final checkpoint - End-to-end validation
   - Ensure all tests pass (backend and frontend)
   - Test TV Mode in browser with auto-refresh
   - Test Supervisor Mode form submissions

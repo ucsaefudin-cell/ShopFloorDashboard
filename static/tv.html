@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TV Mode - Shop Floor Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'sonoco-blue': '#1e3a8a',
+                        'sonoco-blue-dark': '#0f172a',
+                        'sonoco-green': '#84cc16',
+                        'sonoco-green-dark': '#65a30d',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-sonoco {
+            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+        }
+        .gradient-green {
+            background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
+        }
+        
+        /* Animation untuk loading */
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        /* Shift handover overlay */
+        .handover-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+            z-index: 9999;
+            display: none;
+        }
+        .handover-overlay.active {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="gradient-sonoco min-h-screen">
+    <!-- Header -->
+    <header class="bg-black/30 backdrop-blur-sm border-b-4 border-sonoco-green">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-4xl font-bold text-white">📺 TV Mode</h1>
+                    <p class="text-sonoco-green text-lg">Real-Time Production Monitoring</p>
+                </div>
+                <div class="text-right">
+                    <div id="current-time" class="text-3xl font-bold text-white"></div>
+                    <div id="current-date" class="text-lg text-gray-300"></div>
+                    <div id="current-shift" class="text-xl text-sonoco-green font-semibold mt-1"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <!-- Loading State -->
+        <div id="loading" class="text-center py-20">
+            <div class="inline-block animate-pulse-slow">
+                <div class="text-6xl mb-4">⚙️</div>
+                <p class="text-2xl text-white">Memuat data produksi...</p>
+            </div>
+        </div>
+
+        <!-- Production Orders Grid -->
+        <div id="orders-grid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Cards akan di-generate oleh JavaScript -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-20">
+            <div class="text-6xl mb-4">📋</div>
+            <p class="text-2xl text-white">Tidak ada production order aktif</p>
+        </div>
+    </main>
+
+    <!-- Shift Handover Overlay -->
+    <div id="handover-overlay" class="handover-overlay items-center justify-center">
+        <div class="text-center px-8">
+            <div class="text-8xl mb-8">🎉</div>
+            <h2 class="text-6xl font-bold text-white mb-6">Shift Handover</h2>
+            <div id="handover-content" class="text-3xl text-gray-300 space-y-6">
+                <!-- Content akan di-generate oleh JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="fixed bottom-0 left-0 right-0 bg-black/30 backdrop-blur-sm border-t-2 border-sonoco-green/30">
+        <div class="container mx-auto px-6 py-3">
+            <div class="flex justify-between items-center text-sm text-gray-400">
+                <div>Auto-refresh: <span class="text-sonoco-green font-semibold">30 detik</span></div>
+                <div>Last update: <span id="last-update" class="text-white">-</span></div>
+                <div>
+                    <a href="/index.html" class="text-sonoco-green hover:text-white transition-colors">
+                        ← Kembali ke Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="/js/api.js"></script>
+    <script src="/js/theme.js"></script>
+    <script src="/js/tv-mode.js"></script>
+</body>
+</html>
