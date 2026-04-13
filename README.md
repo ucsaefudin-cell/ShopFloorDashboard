@@ -1,279 +1,56 @@
-# Shop Floor Dashboard MVP
+# 🏭 Real-Time Shop Floor Monitoring Dashboard
 
-Dashboard monitoring produksi real-time untuk lingkungan manufaktur dengan dua mode operasi: TV Mode (zero-touch) dan Supervisor Mode (interaktif).
+[![Deployment Status](https://img.shields.io/badge/Deployment-GCP%20Cloud%20Run-blue?style=for-the-badge&logo=google-cloud)](https://shopfloor-dashboard-105455385518.asia-southeast2.run.app/index.html)
+[![Development Method](https://img.shields.io/badge/Metode-Spec--Driven%20AI%20Development-green?style=for-the-badge)](https://github.com/ucsaefudin-cell/ShopFloorDashboard)
 
-## 🎯 Features
+## 📌 Deskripsi Proyek
+**Real-Time Shop Floor Monitoring Dashboard** adalah solusi digitalisasi manufaktur yang dirancang untuk memberikan visibilitas penuh terhadap performa mesin produksi secara langsung. Sistem ini menjembatani kesenjangan informasi antara lantai produksi (*shop floor*) dan tim manajemen melalui visualisasi data yang presisi, responsif, dan adaptif terhadap kondisi operasional pabrik.
 
-### TV Mode (Zero-Touch Display)
-- ✅ Auto-refresh setiap 30 detik
-- ✅ Typography besar untuk visibility dari jarak jauh
-- ✅ Auto theme switching (day/night)
-- ✅ Shift handover event (15 menit sebelum shift berakhir)
-- ✅ Real-time production metrics
-- ✅ Color-coded efficiency indicators
-
-### Supervisor Mode (Interactive Dashboard)
-- ✅ Interactive production order table
-- ✅ Create & update production orders
-- ✅ Real-time statistics cards
-- ✅ Chart.js visualizations (efficiency bar chart, progress doughnut chart)
-- ✅ Form validation dengan error handling
-- ✅ Toast notifications
-- ✅ Responsive layout
-
-## 🛠️ Tech Stack
-
-- **Backend**: Python 3.x, Flask 3.0, SQLAlchemy 2.0
-- **Database**: PostgreSQL 14+
-- **Frontend**: Vanilla JavaScript (ES6+), Chart.js 4.x, Tailwind CSS 3.x
-- **API**: RESTful JSON API dengan CORS support
-
-## 🚀 Quick Start
-
-### 1. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Setup Database PostgreSQL
-
-```bash
-# Buat database baru
-createdb shopfloor_db
-```
-
-### 3. Konfigurasi Environment Variables
-
-```bash
-# Copy template
-cp .env.example .env
-
-# Edit .env dengan konfigurasi Anda
-```
-
-File `.env`:
-```
-DATABASE_URL=postgresql://postgres:your_password@localhost:5432/shopfloor_db
-FLASK_ENV=development
-SECRET_KEY=your-secret-key-here
-CORS_ORIGINS=*
-```
-
-### 4. Inisialisasi Database dan Seeding
-
-```bash
-python seed.py
-```
-
-Output:
-```
-==================================================
-SHOP FLOOR DASHBOARD - DATABASE SEEDER
-==================================================
-
-✓ Database tables created successfully
-✓ 5 mesin berhasil dibuat
-✓ 20 production orders berhasil dibuat
-
-==================================================
-✓ SEEDING SELESAI!
-==================================================
-```
-
-### 5. Jalankan Backend Server
-
-```bash
-python app.py
-```
-
-Server berjalan di: `http://localhost:5000`
-
-### 6. Akses Dashboard
-
-- **Home**: http://localhost:5000/index.html
-- **TV Mode**: http://localhost:5000/tv.html
-- **Supervisor Mode**: http://localhost:5000/supervisor.html
-
-## 📁 Struktur Project
-
-```
-.
-├── app.py                      # Flask application entry point
-├── config.py                   # Konfigurasi aplikasi
-├── database.py                 # Database connection management
-├── models.py                   # SQLAlchemy ORM models
-├── routes.py                   # REST API endpoints
-├── services.py                 # Business logic services
-├── seed.py                     # Database seeder script
-├── requirements.txt            # Python dependencies
-├── .env.example               # Template environment variables
-├── static/                    # Frontend files
-│   ├── index.html            # Home page
-│   ├── tv.html               # TV Mode page
-│   ├── supervisor.html       # Supervisor Mode page
-│   └── js/
-│       ├── api.js            # API client
-│       ├── theme.js          # Theme switcher
-│       ├── tv-mode.js        # TV Mode logic
-│       ├── supervisor-mode.js # Supervisor Mode logic
-│       └── charts.js         # Chart.js visualizations
-├── BACKEND_VALIDATION.md      # Backend validation checklist
-├── DEPLOYMENT_GUIDE.md        # Panduan deployment lengkap
-└── README.md                  # Dokumentasi ini
-```
-
-## 🗄️ Database Schema
-
-### Table: mst_machine
-- `id` (PK, Integer)
-- `machine_code` (String, Unique)
-- `machine_name` (String)
-- `is_active` (Boolean)
-
-### Table: trx_production_order
-- `id` (PK, Integer)
-- `machine_id` (FK -> mst_machine.id)
-- `shift_name` (String: Morning/Afternoon/Night)
-- `order_date` (Date)
-- `target_qty` (Integer)
-- `completed_qty` (Integer)
-- `wip_qty` (Integer)
-- `created_at` (DateTime)
-
-### Calculated Fields
-- **pending_qty**: `target_qty - completed_qty - wip_qty`
-- **efficiency_percent**: `(completed_qty / target_qty) * 100`
-
-## 🌐 API Endpoints
-
-### Machines
-- `GET /api/machines` - List semua mesin aktif
-
-### Production Orders
-- `GET /api/production-orders` - List semua orders (support filters)
-- `GET /api/production-orders/{id}` - Detail single order
-- `POST /api/production-orders` - Create order baru
-- `PUT /api/production-orders/{id}` - Update order existing
-
-### Health Check
-- `GET /api/health` - Status monitoring
-
-## 🎨 Branding (Sonoco)
-
-### Color Palette
-- **Primary Blue**: #1e3a8a (Dark Blue)
-- **Primary Blue Dark**: #0f172a
-- **Accent Green**: #84cc16 (Lime Green)
-- **Accent Green Dark**: #65a30d
-
-### Responsive Breakpoints
-- **Mobile**: < 768px
-- **Tablet**: 768px - 1024px
-- **Desktop**: > 1024px
-
-## ⏰ Shift Configuration
-
-### Shift Times
-- **Morning**: 6 AM - 2 PM
-- **Afternoon**: 2 PM - 10 PM
-- **Night**: 10 PM - 6 AM
-
-### Shift Handover Event
-Trigger 15 menit sebelum shift berakhir:
-- Morning → Afternoon: **1:45 PM**
-- Afternoon → Night: **9:45 PM**
-- Night → Morning: **5:45 AM**
-
-## 🧪 Testing
-
-### Backend API Testing
-```bash
-# Manual testing
-curl http://localhost:5000/api/health
-curl http://localhost:5000/api/machines
-curl http://localhost:5000/api/production-orders
-
-# Automated testing
-bash test_api.sh
-```
-
-### Frontend Testing
-1. Buka TV Mode dan verifikasi auto-refresh
-2. Buka Supervisor Mode dan test CRUD operations
-3. Test responsive layout (resize browser)
-4. Test shift handover event (ubah waktu sistem untuk testing)
-
-## 📚 Documentation
-
-- **BACKEND_VALIDATION.md**: Checklist validasi backend
-- **DEPLOYMENT_GUIDE.md**: Panduan deployment lengkap untuk production
-
-## 🔧 Development Notes
-
-- Semua komentar kode dalam **Bahasa Indonesia** ✅
-- Nama variabel dan fungsi dalam **Bahasa Inggris** ✅
-- Error messages dalam **Bahasa Indonesia** ✅
-- API documentation dalam **Bahasa Indonesia** ✅
-
-## 📈 Future Enhancements
-
-- User authentication & authorization
-- WebSocket untuk real-time updates
-- Historical data tracking
-- Export functionality (CSV, PDF)
-- Mobile app version
-- Push notifications
-- Multi-language support
+Dibangun dengan pendekatan **Spec-Driven Development** memanfaatkan **Generative AI (Prompt Architecture)**, proyek ini menunjukkan bagaimana integrasi antara logika bisnis manufaktur yang kompleks dan teknologi *cloud* modern dapat menghasilkan solusi IT yang efisien dan tepat guna.
 
 ---
 
-## ☁️ Deployment ke Production (GCP)
+## 🚀 Fitur Utama
 
-Dashboard ini siap untuk di-deploy ke **Google Cloud Platform (GCP)** menggunakan:
-- **Cloud Run** (Serverless Container)
-- **Cloud SQL** (PostgreSQL)
-- **Artifact Registry** (Docker Images)
-- **Secret Manager** (Credentials)
+### 1. TV Mode (Tampilan Lantai Produksi)
+Mode tampilan yang dioptimalkan khusus untuk layar monitor TV di area pabrik (Zero-Touch Display).
+- **Arsitektur Viewport-Fit:** Menggunakan satuan dinamis untuk memastikan tampilan 100% pas di layar tanpa perlu *scrolling*.
+- **Pencocokan Pesanan Real-Time:** Logika otomatis yang hanya menampilkan perintah produksi aktif berdasarkan jadwal shift dan tanggal saat ini.
+- **Tipografi Jumbo:** Visualisasi angka efisiensi dan target dengan font ukuran besar agar tetap terbaca jelas dari jarak 10 meter.
 
-### Quick Deploy
+### 2. Event Handover Shift (Otomatisasi Transisi)
+Fitur otomatisasi untuk mendukung moral dan keamanan kerja selama jendela waktu 10 menit pergantian regu:
+- **Fase A (Selamat Tinggal & Kaizen):** Muncul 10 menit sebelum shift berakhir. Menampilkan ringkasan pencapaian regu dan instruksi kerapihan area (5S/Kaizen).
+- **Fase B (Selamat Datang & Keamanan):** Muncul saat shift baru dimulai. Berisi pesan motivasi target dan pengingat penggunaan Alat Pelindung Diri (APD).
+- **Pesan Berurutan:** Rotasi pesan otomatis setiap 10 detik untuk memastikan semua instruksi kebersihan dan keselamatan tersampaikan tanpa menumpuk di layar.
 
-```bash
-# Set variables
-export PROJECT_ID="your-project-id"
-export REGION="asia-southeast2"
-
-# Build dan deploy
-gcloud builds submit --tag ${REGION}-docker.pkg.dev/${PROJECT_ID}/shopfloor/shopfloor-dashboard:latest
-gcloud run deploy shopfloor-dashboard --image=${REGION}-docker.pkg.dev/${PROJECT_ID}/shopfloor/shopfloor-dashboard:latest
-```
-
-### Dokumentasi Deployment
-
-- **📘 GCP_DEPLOYMENT_GUIDE.md** - Panduan lengkap step-by-step
-- **⚡ QUICK_DEPLOY.md** - Quick reference untuk deployment cepat
-
-### Files untuk Production
-
-- ✅ `Dockerfile` - Production-ready container dengan Gunicorn
-- ✅ `.dockerignore` - Exclude unnecessary files
-- ✅ `cloudbuild.yaml` - CI/CD pipeline configuration
-- ✅ `.env.production.example` - Production environment variables template
-- ✅ `config.py` - Support Cloud SQL Unix Socket connection
+### 3. Supervisor Mode (Analitik & Kendali)
+Antarmuka interaktif yang dirancang khusus untuk penggunaan di perangkat laptop atau PC monitor bagi level manajemen:
+- **Kartu KPI Komprehensif:** Ringkasan Total Pesanan, Rata-rata Efisiensi, Total Target, dan Total Pencapaian.
+- **Grafik Dinamis:** Grafik batang perbandingan efisiensi antar mesin dan grafik donat untuk memantau progres produksi harian.
+- **Tabel Data Interaktif:** Daftar detail seluruh pesanan produksi untuk kebutuhan audit dan analisis mendalam.
 
 ---
 
-## 📄 License
+## 🛠️ Spesifikasi Teknologi
 
-MIT License - Shop Floor Dashboard MVP
-
-## 👥 Contributors
-
-Developed with ❤️ for manufacturing excellence
+- **Frontend:** HTML5, CSS3 (Modern Flexbox & Grid), JavaScript (ES6+).
+- **Infrastruktur Cloud:** Google Cloud Platform (GCP).
+  - **Cloud Run:** Untuk *deployment serverless* yang stabil dan mudah dikembangkan.
+  - **Artifact Registry:** Untuk manajemen penyimpanan gambar kontainer aplikasi.
+- **Metodologi Pengembangan:**
+  - **Spec-Driven Development:** Pengembangan berbasis spesifikasi teknis terstruktur.
+  - **Generative AI Prompt Architecture:** Pemanfaatan AI sebagai asisten pemrograman untuk mempercepat siklus pengembangan dan optimasi kode sistem.
 
 ---
 
-**Version**: 1.0.0 (MVP)  
-**Status**: ✅ Production Ready  
-**Last Updated**: 2024
+## 🏗️ Arsitektur Deployment
 
+Aplikasi ini telah di-*deploy* sepenuhnya di lingkungan **Google Cloud Platform (GCP)** dengan alur kerja profesional:
+1. **Kode Sumber:** Dikelola melalui repositori GitHub.
+2. **Kontainerisasi:** Proses pembangunan aplikasi menjadi gambar kontainer yang terisolasi.
+3. **Penyebaran:** Di-hosting melalui **GCP Cloud Run** (Region: Asia-Southeast2) untuk memastikan akses cepat dan waktu operasional yang maksimal di wilayah Indonesia.
+
+**Akses Live Demo:** [Kunjungi Portal Web](https://shopfloor-dashboard-105455385518.asia-southeast2.run.app/index.html)
+
+---
